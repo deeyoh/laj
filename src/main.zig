@@ -39,6 +39,8 @@ pub fn main(init: std.process.Init) !void {
             .key_press => |key| {
                 if (key.matches('c', .{ .ctrl  =true })) {
                     break;
+                } else if (key.matches(vaxis.Key.tab, .{})) {
+                    tui.cycleFocus();
                 }
             },
             .winsize => |ws| {

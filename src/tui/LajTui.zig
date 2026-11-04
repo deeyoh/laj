@@ -12,6 +12,14 @@ const ComponentFocus = enum {
 
 hasFocus: ComponentFocus = .commits,
 
+pub fn cycleFocus(self: *LajTui) void {
+    self.hasFocus = switch (self.hasFocus) {
+        .commits => .details,
+        .details => .diff,
+        .diff => .commits,
+    };
+}
+
 pub fn draw(self: *LajTui, root: vaxis.Window) void {
     root.clear();
     root.hideCursor();
@@ -49,7 +57,7 @@ pub fn draw(self: *LajTui, root: vaxis.Window) void {
     _ = (Pane{
         .title = "Diff",
         .rect = layout.diff,
-        .isFocused = self.hasFocus == .details
+        .isFocused = self.hasFocus == .diff
     }).draw(root);
 
     const footer = root.child(.{
