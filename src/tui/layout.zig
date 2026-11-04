@@ -53,13 +53,13 @@ pub const Layout = struct {
 
             .diff = .{
                 .x = lw,
-                .y = diff_height,
+                .y = header_height + details_height,
                 .width = rw,
                 .height = diff_height,
             },
 
             .footer = .{
-                .x = width,
+                .x = 0,
                 .y = height - footer_height,
                 .width = width,
                 .height = footer_height,

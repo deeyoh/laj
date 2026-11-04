@@ -52,10 +52,15 @@ pub fn draw(self: *LajTui, root: vaxis.Window) void {
         .isFocused = self.hasFocus == .details
     }).draw(root);
 
-    _ = root.child(.{
+    const footer = root.child(.{
         .x_off = @intCast(layout.footer.x),
         .y_off = @intCast(layout.footer.y),
         .width = @intCast(layout.footer.width),
         .height = @intCast(layout.footer.height),
     });
+
+    _ = footer.printSegment(.{
+        .text = "ready",
+        .style = .{ .bold = true },
+    }, .{ .wrap = .none });
 }
