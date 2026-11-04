@@ -4,6 +4,10 @@ const vaxis = @import("vaxis");
 const Layout = @import("layout.zig").Layout;
 const Pane = @import("Pane.zig");
 
+const Commit = @import("../jj/Commit.zig");
+
+const CommitsPane = @import("CommitsPane.zig");
+
 const ComponentFocus = enum {
     commits,
     details,
@@ -11,6 +15,7 @@ const ComponentFocus = enum {
 };
 
 hasFocus: ComponentFocus = .commits,
+commits: []const Commit,
 
 pub fn cycleFocus(self: *LajTui) void {
     self.hasFocus = switch (self.hasFocus) {
@@ -42,11 +47,12 @@ pub fn draw(self: *LajTui, root: vaxis.Window) void {
         .style = .{ .bold = true },
     }, .{ .wrap = .none });
 
-    _ = (Pane{
-        .title = "Commits",
-        .rect = layout.commits,
-        .isFocused = self.hasFocus == .commits
-    }).draw(root);
+    CommitsPane.draw(
+        root, 
+        layout.commits, 
+        self.hasFocus == .commits, 
+        self.commits
+    );
 
     _ = (Pane{
         .title = "Change Details",
