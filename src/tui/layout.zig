@@ -61,7 +61,7 @@ pub const Layout = struct {
             .footer = .{
                 .x = width,
                 .y = height - footer_height,
-                .width = .width,
+                .width = width,
                 .height = footer_height,
             },
         };
