@@ -36,10 +36,15 @@ pub fn main(init: std.process.Init) !void {
         const event = try event_loop.nextEvent();
 
         switch (event) {
+            .key_press => |key| {
+                if (key.matches('c', .{ .ctrl  =true })) {
+                    break;
+                }
+            },
             .winsize => |ws| {
                 try vx.resize(alloc, tty.writer(), ws);
             },
-            else => {},
+            // else => {},
         }
 
         const win = vx.window();
