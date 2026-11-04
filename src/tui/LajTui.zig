@@ -4,9 +4,10 @@ const vaxis = @import("vaxis");
 const Layout = @import("layout.zig").Layout;
 const Pane = @import("Pane.zig");
 
-const Commit = @import("../jj/Commit.zig");
+const Commit = @import("../core/Commit.zig");
 
 const CommitsPane = @import("CommitsPane.zig");
+const CommitGraph = @import("commits/Graph.zig");
 
 const ComponentFocus = enum {
     commits,

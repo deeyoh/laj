@@ -4,7 +4,8 @@ const vaxis = @import("vaxis");
 const laj = @import("laj");
 const LajTui = @import("tui/LajTui.zig");
 
-const Commit = @import("jj/Commit.zig");
+const Commit = @import("core/Commit.zig");
+const CommitGraph = @import("tui/commits/Graph.zig");
 
 const Event = union(enum) {
     key_press: vaxis.Key,
@@ -47,12 +48,24 @@ pub fn main(init: std.process.Init) !void {
     while (lines.next()) |line| {
         if (line.len == 0) continue;
 
-        const parsed_commit = try std.json.parseFromSliceLeaky(Commit, commits_arena.allocator(), line, .{ 
-            .ignore_unknown_fields = true, .allocate = .alloc_always 
-        });
+        const parsed_commit = try std.json.parseFromSliceLeaky(
+            Commit, 
+            commits_arena.allocator(), 
+            line, 
+            .{ 
+                .ignore_unknown_fields = true, 
+                .allocate = .alloc_always 
+            }
+        );
 
         try commits.append(commits_arena.allocator(), parsed_commit);
     }
+
+    const lanes = [_]CommitGraph.Lane{
+        .{ .target = "commit-A" },
+        .{},
+        .{ .target = "commit-B" },
+    };
 
     var buffer: [1024]u8 = undefined;
     var tty = try vaxis.Tty.init(io, &buffer);

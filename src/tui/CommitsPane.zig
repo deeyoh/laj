@@ -3,7 +3,7 @@ const CommitsPane = @This();
 const vaxis = @import("vaxis");
 const Rect = @import("layout.zig").Rect;
 const Pane = @import("Pane.zig");
-const Commit = @import("../jj/Commit.zig");
+const Commit = @import("../core/Commit.zig");
 
 pub fn draw(
     root: vaxis.Window,
