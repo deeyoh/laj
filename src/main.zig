@@ -4,6 +4,7 @@ const vaxis = @import("vaxis");
 const laj = @import("laj");
 const LajTui = @import("tui/LajTui.zig");
 
+const Logger = @import("Logger.zig");
 const Commit = @import("core/Commit.zig");
 const CommitGraph = @import("tui/commits/Graph.zig");
 
@@ -12,9 +13,18 @@ const Event = union(enum) {
     winsize: vaxis.Winsize,
 };
 
+pub const std_options: std.Options = .{
+    .logFn = Logger.logFn,
+    .log_level = .debug
+};
+
+
 pub fn main(init: std.process.Init) !void {
     const io = init.io;
     const alloc = init.gpa;
+
+    try Logger.init(io, init.environ_map, alloc);
+    defer Logger.deinit();
 
     const result = try std.process.run(alloc, io, .{
         .argv = &.{
@@ -61,11 +71,7 @@ pub fn main(init: std.process.Init) !void {
         try commits.append(commits_arena.allocator(), parsed_commit);
     }
 
-    const lanes = [_]CommitGraph.Lane{
-        .{ .target = "commit-A" },
-        .{},
-        .{ .target = "commit-B" },
-    };
+    std.log.info("parsed commits", .{});
 
     var buffer: [1024]u8 = undefined;
     var tty = try vaxis.Tty.init(io, &buffer);
