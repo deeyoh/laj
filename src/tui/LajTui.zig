@@ -17,6 +17,7 @@ const ComponentFocus = enum {
 
 hasFocus: ComponentFocus = .commits,
 commits: []const Commit,
+commits_pane: CommitsPane = .{},
 
 pub fn cycleFocus(self: *LajTui) void {
     self.hasFocus = switch (self.hasFocus) {
@@ -48,7 +49,7 @@ pub fn draw(self: *LajTui, root: vaxis.Window) void {
         .style = .{ .bold = true },
     }, .{ .wrap = .none });
 
-    CommitsPane.draw(
+    self.commits_pane.draw(
         root, 
         layout.commits, 
         self.hasFocus == .commits, 

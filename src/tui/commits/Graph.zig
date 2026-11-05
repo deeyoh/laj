@@ -25,7 +25,7 @@ pub const Lane = struct {
 };
 
 /// Finds the corresponding lane index for a commit, if exists.
-fn findLane(lanes: []const Lane, commit_id: []const u8) ?usize {
+pub fn findLane(lanes: []const Lane, commit_id: []const u8) ?usize {
     for (lanes, 0..) |lane, idx| {
         if (lane.target) |target| {
             if (std.mem.eql(u8, target, commit_id)) {
@@ -33,4 +33,5 @@ fn findLane(lanes: []const Lane, commit_id: []const u8) ?usize {
             }
         }
     }
+    return null;
 }

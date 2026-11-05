@@ -5,7 +5,13 @@ const Rect = @import("layout.zig").Rect;
 const Pane = @import("Pane.zig");
 const Commit = @import("../core/Commit.zig");
 
+const CommitRow = @import("commits/Row.zig");
+
+selected_index: usize = 0,
+scroll: usize = 0,
+
 pub fn draw(
+    self: *CommitsPane,
     root: vaxis.Window,
     layout: Rect,
     isFocused: bool,
@@ -17,21 +23,36 @@ pub fn draw(
         .isFocused = isFocused,
     }).draw(root);
 
-    for (commits, 0..) |commit, index| {
+    for (commits, 0..) |*commit, index| {
         if (index >= content.height) break;
 
-        _ = content.printSegment(.{
-            .text = commit.description,
-        }, .{
-            .row_offset = @intCast(index),
-            .wrap = .none
+        const row_window = content.child(.{
+            .x_off = 0,
+            .y_off = @intCast(index),
+            .width = content.width,
+            .height = 1,
         });
+
+        const row = CommitRow{
+            .commit = commit
+        };
+
+        row.draw(row_window, index == self.selected_index);
     }
 }
 
+pub fn nextCommitRow(self: *CommitsPane, commit_count: usize) void {
+    if (commit_count == 0) return;
 
-// pub fndraw (
-//     root: vaxis.Window,
-//     isFocused = 
-// ) void {
-// }
+    if (self.selected_index < commit_count - 1) {
+        self.selected_index += 1;
+    }
+}
+
+pub fn prevCommitRow(self: *CommitsPane, commit_count: usize) void {
+    if (commit_count == 0) return;
+
+    if (self.selected_index > 0 ) {
+        self.selected_index -= 1;
+    }
+}

@@ -31,6 +31,8 @@ pub fn main(init: std.process.Init) !void {
         .argv = &.{
             "jj",
             "log",
+            "-r",
+            "all()",
             "--no-graph",
             "--color",
             "never",
@@ -72,7 +74,7 @@ pub fn main(init: std.process.Init) !void {
         try commits.append(commits_arena.allocator(), parsed_commit);
     }
 
-    std.log.info("parsed commits", .{});
+    std.log.info("commits parsed: {d}\n", .{ commits.items.len });
 
     var buffer: [1024]u8 = undefined;
     var tty = try vaxis.Tty.init(io, &buffer);
@@ -104,6 +106,13 @@ pub fn main(init: std.process.Init) !void {
                     break;
                 } else if (key.matches(vaxis.Key.tab, .{})) {
                     tui.cycleFocus();
+                } else if (tui.hasFocus == .commits) {
+                    if (key.matches('j', .{}) or key.matches(vaxis.Key.down, .{})) {
+                        tui.commits_pane.nextCommitRow(tui.commits.len);
+                    } else if (key.matches('k', .{}) or key.matches(vaxis.Key.up, .{})) {
+                        tui.commits_pane.prevCommitRow(tui.commits.len);
+                    }
+
                 }
             },
             .winsize => |ws| {
