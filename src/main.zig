@@ -1,5 +1,6 @@
 const std = @import("std");
 const vaxis = @import("vaxis");
+const builtin = @import("builtin");
 
 const laj = @import("laj");
 const LajTui = @import("tui/LajTui.zig");

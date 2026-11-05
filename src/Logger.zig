@@ -36,6 +36,7 @@ pub fn init(
     try std.Io.Dir.cwd().createDirPath(io, log_dir);
 
     const log_path = try Dir.path.join(allocator, &.{ log_dir, "laj.log" });
+    defer allocator.free(log_path);
 
     const file = try std.Io.Dir.cwd().createFile(io, log_path, .{ .truncate = true });
 
@@ -55,7 +56,10 @@ pub fn logFn(
     comptime format: []const u8,
     args: anytype,
 ) void {
-    const s = state orelse return;
+    const s = state orelse {
+        std.log.defaultLog(level, scope, format, args);
+        return;
+    };
 
     mutex.lockUncancelable(s.io);
     defer mutex.unlock(s.io);
