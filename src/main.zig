@@ -5,6 +5,8 @@ const builtin = @import("builtin");
 const laj = @import("laj");
 const LajTui = @import("tui/LajTui.zig");
 
+const Action = @import("core/Action.zig");
+
 const Logger = @import("Logger.zig");
 const Commit = @import("core/Commit.zig");
 const CommitGraph = @import("tui/commits/Graph.zig");
@@ -111,6 +113,10 @@ pub fn main(init: std.process.Init) !void {
             .key_press => |key| {
                 if (key.matches('c', .{ .ctrl = true })) {
                     break;
+                } else if (key.matches(vaxis.Key.tab, .{})) {
+                    Action.performTuiAction(&tui, .{
+                        .cycle_pane_focus = .left_pane,
+                    });
                 }
                 // } else if (key.matches(vaxis.Key.tab, .{})) {
                 //     tui.cyclePaneFocus();

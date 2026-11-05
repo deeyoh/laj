@@ -1,8 +1,6 @@
 const LajTui = @This();
 
 const vaxis = @import("vaxis");
-// const Layout = @import("layout.zig").Layout;
-// const 
 const layout = @import("layout.zig");
 const Rect = @import("layout.zig").Rect;
 const Pane = @import("Pane.zig");
