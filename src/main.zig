@@ -118,6 +118,8 @@ pub fn main(init: std.process.Init) !void {
                         tui.commits_pane.nextCommitRow(tui.commits.len);
                     } else if (key.matches('k', .{}) or key.matches(vaxis.Key.up, .{})) {
                         tui.commits_pane.prevCommitRow(tui.commits.len);
+                    } else if (key.matches('G', .{})) {
+                        tui.commits_pane.lastRow(tui.commits.len);
                     }
 
                 }

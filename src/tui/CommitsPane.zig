@@ -61,3 +61,8 @@ pub fn prevCommitRow(self: *CommitsPane, commit_count: usize) void {
         self.selected_index -= 1;
     }
 }
+
+pub fn lastRow(self: *CommitsPane, commit_count: usize) void {
+    if (commit_count == 0) return;
+    self.selected_index = commit_count - 1;
+}
