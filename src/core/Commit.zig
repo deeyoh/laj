@@ -1,6 +1,8 @@
 const Commit = @This();
 
 commit_id: []const u8,
+change_id: []const u8,
+display_id: []const u8 = "",
 parents: []const []const u8,
 description: []const u8,
 author: Signature,

@@ -37,7 +37,7 @@ pub fn main(init: std.process.Init) !void {
             "--color",
             "never",
             "-T",
-            "json(self) ++ \"\\n\"",
+            "json(self) ++ \"\\t\" ++ change_id.shortest(8) ++ \"\\n\"",
         },
     });
     defer alloc.free(result.stdout);
@@ -61,16 +61,23 @@ pub fn main(init: std.process.Init) !void {
     while (lines.next()) |line| {
         if (line.len == 0) continue;
 
-        const parsed_commit = try std.json.parseFromSliceLeaky(
+        const separator = std.mem.findScalar(u8, line, '\t') orelse
+            return error.InvalidCommitRecord;
+
+        const json_text = line[0..separator];
+        const display_id = line[separator + 1..];
+
+        var parsed_commit = try std.json.parseFromSliceLeaky(
             Commit, 
             commits_arena.allocator(), 
-            line, 
+            json_text, 
             .{ 
                 .ignore_unknown_fields = true, 
                 .allocate = .alloc_always 
             }
         );
 
+        parsed_commit.display_id = try commits_arena.allocator().dupe(u8, display_id);
         try commits.append(commits_arena.allocator(), parsed_commit);
     }
 

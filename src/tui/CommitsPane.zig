@@ -23,14 +23,19 @@ pub fn draw(
         .isFocused = isFocused,
     }).draw(root);
 
+    const row_height: usize = 2;
     for (commits, 0..) |*commit, index| {
+        const y = index * row_height;
         if (index >= content.height) break;
 
         const row_window = content.child(.{
             .x_off = 0,
-            .y_off = @intCast(index),
+            .y_off = @intCast(y),
             .width = content.width,
-            .height = 1,
+            .height = @intCast(@min(
+                row_height,
+                content.height - y,
+            )),
         });
 
         const row = CommitRow{
