@@ -7,7 +7,7 @@ const Pane = @import("Pane.zig");
 const Commit = @import("../core/Commit.zig");
 
 const CommitsPane = @import("CommitsPane.zig");
-const CommitGraph = @import("commits/Graph.zig");
+const Header = @import("Header.zig");
 
 const ComponentFocus = enum {
     commits,
@@ -17,6 +17,7 @@ const ComponentFocus = enum {
 
 hasFocus: ComponentFocus = .commits,
 commits: []const Commit,
+header: Header = .{},
 commits_pane: CommitsPane = .{},
 
 pub fn cycleFocus(self: *LajTui) void {
@@ -37,17 +38,22 @@ pub fn draw(self: *LajTui, root: vaxis.Window) void {
     );
 
     // root.child() creates a drawing region with `root`.
-    const header = root.child(.{
-        .x_off = @intCast(layout.header.x),
-        .y_off = @intCast(layout.header.y),
-        .width = @intCast(layout.header.width),
-        .height = @intCast(layout.header.height),
-    });
+    // const header = root.child(.{
+    //     .x_off = @intCast(layout.header.x),
+    //     .y_off = @intCast(layout.header.y),
+    //     .width = @intCast(layout.header.width),
+    //     .height = @intCast(layout.header.height),
+    // });
+    //
+    // _ = header.printSegment(.{
+    //     .text = " Laj | Jujutsu TUI",
+    //     .style = .{ .bold = true },
+    // }, .{ .wrap = .none });
+    self.header.draw(
+        root,
+        layout.header,
+    );
 
-    _ = header.printSegment(.{
-        .text = " Laj | Jujutsu TUI",
-        .style = .{ .bold = true },
-    }, .{ .wrap = .none });
 
     self.commits_pane.draw(
         root, 
