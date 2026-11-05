@@ -5,11 +5,11 @@ const Rect = @import("layout.zig").Rect;
 
 title: []const u8,
 rect: Rect,
-isFocused: bool = false,
+is_focused: bool = false,
 
 pub fn draw(self: Pane, root: vaxis.Window) vaxis.Window {
     const border_style: vaxis.Style = .{
-        .fg = if (self.isFocused) .{ .index = 12 } else .{ .index = 8 },
+        .fg = if (self.is_focused) .{ .index = 12 } else .{ .index = 8 },
     };
 
     const content = root.child(.{

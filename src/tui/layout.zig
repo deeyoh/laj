@@ -7,11 +7,14 @@ pub const Rect = struct {
     height: u16,
 };
 
+pub const ContentSection = struct {
+    left_section: Rect,
+    right_section: Rect,
+};
+
 pub const Layout = struct {
     header: Rect,
-    commits: Rect,
-    details: Rect,
-    diff: Rect,
+    content_section: ContentSection,
     footer: Rect,
 
     pub fn calculate(width: u16, height: u16) Layout {
@@ -26,9 +29,6 @@ pub const Layout = struct {
         const lw: u16 = @intCast(@as(u32, width) * 35 / 100);
         const rw = width - lw;
 
-        const details_height = content_height / 2;
-        const diff_height = content_height - details_height;
-
         return .{
             .header = .{
                 .x = 0,
@@ -36,28 +36,21 @@ pub const Layout = struct {
                 .width = width,
                 .height = header_height,
             },
+            .content_section = .{
+                .left_section = .{
+                    .x = 0,
+                    .y = header_height,
+                    .width = lw,
+                    .height = content_height,
+                },
 
-            .commits = .{
-                .x = 0,
-                .y = header_height,
-                .width = lw,
-                .height = content_height,
+                .right_section = .{
+                    .x = lw,
+                    .y = header_height,
+                    .width = rw,
+                    .height = content_height
+                },
             },
-
-            .details = .{
-                .x = lw,
-                .y = header_height,
-                .width = rw,
-                .height = details_height,
-            },
-
-            .diff = .{
-                .x = lw,
-                .y = header_height + details_height,
-                .width = rw,
-                .height = diff_height,
-            },
-
             .footer = .{
                 .x = 0,
                 .y = height - footer_height,

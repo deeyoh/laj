@@ -111,18 +111,21 @@ pub fn main(init: std.process.Init) !void {
             .key_press => |key| {
                 if (key.matches('c', .{ .ctrl = true })) {
                     break;
-                } else if (key.matches(vaxis.Key.tab, .{})) {
-                    tui.cycleFocus();
-                } else if (tui.hasFocus == .commits) {
-                    if (key.matches('j', .{}) or key.matches(vaxis.Key.down, .{})) {
-                        tui.commits_pane.nextCommitRow(tui.commits.len);
-                    } else if (key.matches('k', .{}) or key.matches(vaxis.Key.up, .{})) {
-                        tui.commits_pane.prevCommitRow(tui.commits.len);
-                    } else if (key.matches('G', .{})) {
-                        tui.commits_pane.lastRow(tui.commits.len);
-                    }
-
                 }
+                // } else if (key.matches(vaxis.Key.tab, .{})) {
+                //     tui.cyclePaneFocus();
+                // }
+                //HANDLE PANE SPECIFIC ACTIONS
+
+                // } else if (tui. == .commits) {
+                //     if (key.matches('j', .{}) or key.matches(vaxis.Key.down, .{})) {
+                //         tui.commits_pane.nextCommitRow(tui.commits.len);
+                //     } else if (key.matches('k', .{}) or key.matches(vaxis.Key.up, .{})) {
+                //         tui.commits_pane.prevCommitRow(tui.commits.len);
+                //     } else if (key.matches('G', .{})) {
+                //         tui.commits_pane.lastRow(tui.commits.len);
+                //     }
+                //
             },
             .winsize => |ws| {
                 try vx.resize(alloc, tty.writer(), ws);

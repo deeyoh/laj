@@ -1,13 +1,13 @@
-const Row = @This();
+const CommitRow = @This();
 
 const std = @import("std");
 const vaxis = @import("vaxis");
-const Commit = @import("../../core/Commit.zig");
+const Commit = @import("../../../core/Commit.zig");
 
 commit: *const Commit,
 
 pub fn draw(
-    self: Row,
+    self: CommitRow,
     window: vaxis.Window,
     isHighlighted: bool,
 ) void {
