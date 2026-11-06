@@ -158,4 +158,8 @@ pub fn build(b: *std.Build) void {
     });
 
     exe.root_module.addImport("vaxis", vaxis_dep.module("vaxis"));
+
+    exe.root_module.addAnonymousImport("default_config", .{
+        .root_source_file = b.path("default.config.laj"),
+    });
 }

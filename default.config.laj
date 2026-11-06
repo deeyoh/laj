@@ -1,0 +1,3 @@
+keybind = j=down_row
+keybind = k=up_row
+keybind = tab=cycle_pane_focus

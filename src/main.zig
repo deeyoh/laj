@@ -4,6 +4,7 @@ const builtin = @import("builtin");
 
 const laj = @import("laj");
 const LajTui = @import("tui/LajTui.zig");
+const Config = @import("config/Config.zig");
 
 const Action = @import("core/Action.zig");
 
@@ -28,6 +29,8 @@ pub fn main(init: std.process.Init) !void {
 
     try Logger.init(io, init.environ_map, alloc);
     defer Logger.deinit();
+
+    try Config.load(io, alloc, init.environ_map);
 
     const result = try std.process.run(alloc, io, .{
         .argv = &.{
