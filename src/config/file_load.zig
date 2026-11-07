@@ -20,3 +20,20 @@ pub fn defaultXdgPath(
 
     return std.Io.Dir.path.join(alloc, &.{ home, ".config", "laj" });
 }
+
+/// Creates a line iterator for an entire file's content
+pub const LineIterator = struct {
+    lines: std.mem.SplitIterator(u8, .scalar),
+
+    pub fn init(file_content: []const u8) LineIterator {
+        const lines = std.mem.splitScalar(u8, file_content, '\n');
+
+        return .{
+            .lines = lines
+        };
+    }
+
+    pub fn next(self: *LineIterator) ?[]const u8 {
+        return self.lines.next();
+    }
+};

@@ -44,6 +44,16 @@ pub fn load(
     defer file.close(io);
 
     //begin reading and parsing (if invalid return error)
+    var buffer: [2048]u8 = undefined;
+    var reader = file.reader(io, &buffer);
+
+    const contents = try reader.interface.allocRemaining(alloc, .limited(1024 * 1024));
+
+    var line_iterator = file_load.LineIterator.init(contents);
+
+    while (line_iterator.next()) |line| {
+        std.log.info("line: {s}\n", .{ line });
+    }
 }
 
 
