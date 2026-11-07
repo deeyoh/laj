@@ -20,6 +20,14 @@ pub const Action = union(enum) {
     }
 };
 
+/// Parses a given action input to check if is a valid action.
+pub fn parse(action_text: []const u8) !std.meta.Tag(Action) {
+    return std.meta.stringToEnum(
+        std.meta.Tag(Action),
+        action_text,
+    ) orelse error.InvalidAction;
+}
+
 /// Returns a action union type that only contains actions that
 /// belong to the provided scope argument.
 ///

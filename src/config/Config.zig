@@ -1,14 +1,14 @@
+const Config = @This();
+
 const std = @import("std");
 const inputpkg = @import("../inputpkg.zig");
 
 const file_load = @import("file_load.zig");
 
-pub const Keybinds = struct {
-    set: inputpkg.Binding.Set = .{},
-};
-
+bindings: inputpkg.Binding.Set = .{},
 
 pub fn load(
+    self: *Config,
     io: std.Io,
     alloc: std.mem.Allocator,
     environ_map: *std.process.Environ.Map,
@@ -48,12 +48,33 @@ pub fn load(
     var reader = file.reader(io, &buffer);
 
     const contents = try reader.interface.allocRemaining(alloc, .limited(1024 * 1024));
+    defer alloc.free(contents);
 
-    var line_iterator = file_load.LineIterator.init(contents);
+    var iter = file_load.LineIterator.init(contents);
 
-    while (line_iterator.next()) |line| {
-        std.log.info("line: {s}\n", .{ line });
+    while (iter.next()) |line| {
+        if (std.mem.trim(u8, line, " \t").len == 0) continue;
+
+        const separator = std.mem.findScalar(u8, line, '=') orelse
+            return error.InvalidConfigSytax;
+
+        const entry_type = std.mem.trim(u8, line[0..separator], " \t");
+        const entry_value = std.mem.trim(u8, line[separator + 1..], " \t");
+
+        try inputpkg.Entry.parseAndApply(
+            &self.bindings,
+            alloc,
+            entry_type,
+            entry_value,
+        );
     }
+
+    // var iter = try file_load.LineIterator.init(contents, alloc);
+    // defer iter.deinit(alloc);
+    //
+    // for (iter.entries) |entry| {
+    //     std.log.info("entry: {s} | {s}\n", .{ entry.type, entry.value });
+    // }
 }
 
 

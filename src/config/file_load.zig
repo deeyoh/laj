@@ -1,4 +1,5 @@
 const std = @import("std");
+const Entry = @import("../inputpkg.zig").Entry;
 
 // Returns the absolute path of $XDG_CONFIG_HOME. If
 // the variable is not set it defaults to $HOME/.config
@@ -21,15 +22,16 @@ pub fn defaultXdgPath(
     return std.Io.Dir.path.join(alloc, &.{ home, ".config", "laj" });
 }
 
-/// Creates a line iterator for an entire file's content
+/// Creates a line iterator the the entire file's contents.
 pub const LineIterator = struct {
+    // lines: std.mem.splitScalar(u8, .scalar),
     lines: std.mem.SplitIterator(u8, .scalar),
 
     pub fn init(file_content: []const u8) LineIterator {
         const lines = std.mem.splitScalar(u8, file_content, '\n');
 
         return .{
-            .lines = lines
+            .lines = lines,
         };
     }
 

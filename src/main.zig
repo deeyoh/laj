@@ -6,8 +6,6 @@ const laj = @import("laj");
 const LajTui = @import("tui/LajTui.zig");
 const Config = @import("config/Config.zig");
 
-const Action = @import("core/Action.zig");
-
 const Logger = @import("Logger.zig");
 const Commit = @import("core/Commit.zig");
 const CommitGraph = @import("tui/commits/Graph.zig");
@@ -30,7 +28,9 @@ pub fn main(init: std.process.Init) !void {
     try Logger.init(io, init.environ_map, alloc);
     defer Logger.deinit();
 
-    try Config.load(io, alloc, init.environ_map);
+    var config: Config = .{};
+    defer config.bindings.deinit(alloc);
+    try config.load(io, alloc, init.environ_map);
 
     const result = try std.process.run(alloc, io, .{
         .argv = &.{
@@ -116,11 +116,12 @@ pub fn main(init: std.process.Init) !void {
             .key_press => |key| {
                 if (key.matches('c', .{ .ctrl = true })) {
                     break;
-                } else if (key.matches(vaxis.Key.tab, .{})) {
-                    Action.performTuiAction(&tui, .{
-                        .cycle_pane_focus = .left_pane,
-                    });
                 }
+                // } else if (key.matches(vaxis.Key.tab, .{})) {
+                //     Action.performTuiAction(&tui, .{
+                //         .cycle_pane_focus = .left_pane,
+                //     });
+                // }
                 // } else if (key.matches(vaxis.Key.tab, .{})) {
                 //     tui.cyclePaneFocus();
                 // }
