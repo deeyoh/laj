@@ -4,7 +4,9 @@ const builtin = @import("builtin");
 
 const laj = @import("laj");
 const LajTui = @import("tui/LajTui.zig");
+
 const Config = @import("config/Config.zig");
+const KeyMatcher = @import("input/KeyMatcher.zig");
 
 const Logger = @import("Logger.zig");
 const Commit = @import("core/Commit.zig");
@@ -31,6 +33,8 @@ pub fn main(init: std.process.Init) !void {
     var config: Config = .{};
     defer config.bindings.deinit(alloc);
     try config.load(io, alloc, init.environ_map);
+
+    var key_matcher = KeyMatcher.init(&config.bindings);
 
     const result = try std.process.run(alloc, io, .{
         .argv = &.{
@@ -117,25 +121,33 @@ pub fn main(init: std.process.Init) !void {
                 if (key.matches('c', .{ .ctrl = true })) {
                     break;
                 }
-                // } else if (key.matches(vaxis.Key.tab, .{})) {
-                //     Action.performTuiAction(&tui, .{
-                //         .cycle_pane_focus = .left_pane,
-                //     });
-                // }
-                // } else if (key.matches(vaxis.Key.tab, .{})) {
-                //     tui.cyclePaneFocus();
-                // }
-                //HANDLE PANE SPECIFIC ACTIONS
 
-                // } else if (tui. == .commits) {
-                //     if (key.matches('j', .{}) or key.matches(vaxis.Key.down, .{})) {
-                //         tui.commits_pane.nextCommitRow(tui.commits.len);
-                //     } else if (key.matches('k', .{}) or key.matches(vaxis.Key.up, .{})) {
-                //         tui.commits_pane.prevCommitRow(tui.commits.len);
-                //     } else if (key.matches('G', .{})) {
-                //         tui.commits_pane.lastRow(tui.commits.len);
-                //     }
-                //
+                if (key.matches(vaxis.Key.escape, .{})) {
+                    std.log.info("matcher reset\n", .{});
+                } else if (!key.isModifier()) {
+                    switch (key_matcher.feedKey(key)) {
+                        .no_match => {
+                            std.log.warn("no key match: {}\n", .{ key });
+                        },
+                        .pending => {
+                            std.log.info("leader matched: {}. waiting for next key", .{ key });
+                        },
+                        .action => |action| {
+                            std.log.info("action leaf node matched: {}. executing", .{ key });
+                            switch (action) {
+                                .cycle_pane_focus => {
+                                    tui.cyclePaneFocus();
+                                },
+                                .motion_up => {
+                                    std.log.info("motion up triggered", .{});
+                                },
+                                .motion_down => {
+                                    std.log.info("motion down triggered", .{});
+                                }
+                            }
+                        }
+                    }
+                }
             },
             .winsize => |ws| {
                 try vx.resize(alloc, tty.writer(), ws);

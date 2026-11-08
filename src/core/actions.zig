@@ -11,6 +11,8 @@ pub const Scope = enum { app, log };
 
 pub const Action = union(enum) {
     cycle_pane_focus: PaneFocus,
+    motion_up: void,
+    motion_down: void,
     // quit: void,
 
     pub fn scope(action: Action) Scope {

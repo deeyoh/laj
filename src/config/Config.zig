@@ -67,14 +67,8 @@ pub fn load(
             entry_type,
             entry_value,
         );
+        std.log.info("entry: {s} | {s}\n", .{ entry_type, entry_value });
     }
-
-    // var iter = try file_load.LineIterator.init(contents, alloc);
-    // defer iter.deinit(alloc);
-    //
-    // for (iter.entries) |entry| {
-    //     std.log.info("entry: {s} | {s}\n", .{ entry.type, entry.value });
-    // }
 }
 
 
