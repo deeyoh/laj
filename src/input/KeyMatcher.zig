@@ -6,19 +6,7 @@ const Set = @import("Binding.zig").Set;
 
 const Action = @import("../corepkg.zig").actions.Action;
 
-root: *const Set,
-current: *const Set,
-
-pub fn init(root: *const Set) KeyMatcher {
-    return .{
-        .root = root,
-        .current = root,
-    };
-}
-
-pub fn reset(self: *KeyMatcher) void {
-    self.current = self.root;
-}
+current: ?*const Set = null,
 
 pub const Result = union(enum) {
     no_match,
@@ -26,27 +14,33 @@ pub const Result = union(enum) {
     action: std.meta.Tag(Action),
 };
 
-pub fn feedKey(self: *KeyMatcher, key: vaxis.Key) Result {
-    const value = self.findMatch(key) orelse {
+pub fn reset(self: *KeyMatcher) void {
+    self.current = null;
+}
+
+pub fn feedKey(self: *KeyMatcher, root: *const Set, key: vaxis.Key) Result {
+    const current = self.current orelse root;
+
+    const value = findMatch(current, key) orelse {
         self.reset();
         return .no_match;
     };
 
     switch (value) {
-        .leader => |child| {
-            self.current = child;
+        .leader => |child_set| {
+            self.current  = child_set;
             return .pending;
         },
         .leaf_node => |action_tag| {
             self.reset();
             return .{ .action = action_tag };
-        }
+        },
     }
 }
 
-pub fn findMatch(self: *KeyMatcher, key: vaxis.Key) ?Set.Value {
-    const triggers = self.current.tree.keys();
-    const values = self.current.tree.values();
+pub fn findMatch(current: *const Set, key: vaxis.Key) ?Set.Value {
+    const triggers = current.tree.keys();
+    const values = current.tree.values();
 
     for (triggers, values) |trigger, value| {
         if (key.matchExact(trigger.codepoint, trigger.modifiers)) {

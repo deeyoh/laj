@@ -64,7 +64,7 @@ pub fn main(init: std.process.Init) !void {
                 if (key.matches(vaxis.Key.escape, .{})) {
                     std.log.info("matcher reset\n", .{});
                 } else if (!key.isModifier()) {
-                    switch (app.key_matcher.feedKey(key)) {
+                    switch (app.key_matcher.feedKey(&app.state.config.bindings, key)) {
                         .no_match => {
                             std.log.warn("no key match: {}\n", .{ key });
                         },

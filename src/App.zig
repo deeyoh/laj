@@ -12,14 +12,12 @@ pub const GlobalState = struct {
 state: GlobalState,
 commits_arena: std.heap.ArenaAllocator,
 commits: []const Commit,
-key_matcher: KeyMatcher,
+key_matcher: KeyMatcher = .{},
 
 pub fn init(io: std.Io, alloc: std.mem.Allocator, environ_map: *std.process.Environ.Map) !App {
     var config: Config = .{};
     errdefer config.bindings.deinit(alloc);
     try config.load(io, alloc, environ_map);
-
-    const key_matcher = KeyMatcher.init(&config.bindings);
 
     var commits_arena = std.heap.ArenaAllocator.init(alloc);
     errdefer commits_arena.deinit();
@@ -32,7 +30,6 @@ pub fn init(io: std.Io, alloc: std.mem.Allocator, environ_map: *std.process.Envi
         },
         .commits_arena = commits_arena,
         .commits = commits,
-        .key_matcher = key_matcher,
     };
 }
 
