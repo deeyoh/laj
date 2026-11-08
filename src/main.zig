@@ -139,10 +139,10 @@ pub fn main(init: std.process.Init) !void {
                                     tui.cyclePaneFocus();
                                 },
                                 .motion_up => {
-                                    std.log.info("motion up triggered", .{});
+                                    tui.active_view.log.commit_log_pane.prevCommitRow(commits.items.len);
                                 },
                                 .motion_down => {
-                                    std.log.info("motion down triggered", .{});
+                                    tui.active_view.log.commit_log_pane.nextCommitRow(commits.items.len);
                                 }
                             }
                         }

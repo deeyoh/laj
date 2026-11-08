@@ -1,5 +1,6 @@
 const CommitsLogPane = @This();
 
+const std = @import("std");
 const vaxis = @import("vaxis");
 const Rect = @import("../../layout.zig").Rect;
 const Pane = @import("../../Pane.zig");
