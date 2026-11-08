@@ -5,8 +5,7 @@ const builtin = @import("builtin");
 const laj = @import("laj");
 const LajTui = @import("tui/LajTui.zig");
 
-const Config = @import("config/Config.zig");
-const KeyMatcher = @import("input/KeyMatcher.zig");
+const App = @import("App.zig");
 
 const Logger = @import("Logger.zig");
 const Commit = @import("core/Commit.zig");
@@ -22,7 +21,6 @@ pub const std_options: std.Options = .{
     .log_level = .debug
 };
 
-
 pub fn main(init: std.process.Init) !void {
     const io = init.io;
     const alloc = init.gpa;
@@ -30,67 +28,8 @@ pub fn main(init: std.process.Init) !void {
     try Logger.init(io, init.environ_map, alloc);
     defer Logger.deinit();
 
-    var config: Config = .{};
-    defer config.bindings.deinit(alloc);
-    try config.load(io, alloc, init.environ_map);
-
-    var key_matcher = KeyMatcher.init(&config.bindings);
-
-    const result = try std.process.run(alloc, io, .{
-        .argv = &.{
-            "jj",
-            "log",
-            "-r",
-            "all()",
-            "--no-graph",
-            "--color",
-            "never",
-            "-T",
-            "json(self) ++ \"\\t\" ++ change_id.shortest(8) ++ \"\\n\"",
-        },
-    });
-    defer alloc.free(result.stdout);
-    defer alloc.free(result.stderr);
-
-    switch (result.term) {
-        .exited => |code| {
-            if (code != 0) {
-                return error.JjCommandFailed;
-            }
-        },
-        else => return error.JjCommandFailed,
-    }
-
-    var commits_arena = std.heap.ArenaAllocator.init(alloc);
-    defer commits_arena.deinit();
-
-    var commits: std.ArrayList(Commit) = .empty;
-
-    var lines = std.mem.splitScalar(u8, result.stdout, '\n');
-    while (lines.next()) |line| {
-        if (line.len == 0) continue;
-
-        const separator = std.mem.findScalar(u8, line, '\t') orelse
-            return error.InvalidCommitRecord;
-
-        const json_text = line[0..separator];
-        const display_id = line[separator + 1..];
-
-        var parsed_commit = try std.json.parseFromSliceLeaky(
-            Commit, 
-            commits_arena.allocator(), 
-            json_text, 
-            .{ 
-                .ignore_unknown_fields = true, 
-                .allocate = .alloc_always 
-            }
-        );
-
-        parsed_commit.display_id = try commits_arena.allocator().dupe(u8, display_id);
-        try commits.append(commits_arena.allocator(), parsed_commit);
-    }
-
-    std.log.info("commits parsed: {d}\n", .{ commits.items.len });
+    var app = try App.init(io, alloc, init.environ_map);
+    defer app.deinit(alloc);
 
     var buffer: [1024]u8 = undefined;
     var tty = try vaxis.Tty.init(io, &buffer);
@@ -108,7 +47,7 @@ pub fn main(init: std.process.Init) !void {
     defer vx.exitAltScreen(tty.writer()) catch {};
 
     var tui: LajTui = .{
-        .commits = commits.items,
+        .commits = app.commits,
     };
 
     try vx.queryTerminal(tty.writer(), .fromSeconds(1));
@@ -125,7 +64,7 @@ pub fn main(init: std.process.Init) !void {
                 if (key.matches(vaxis.Key.escape, .{})) {
                     std.log.info("matcher reset\n", .{});
                 } else if (!key.isModifier()) {
-                    switch (key_matcher.feedKey(key)) {
+                    switch (app.key_matcher.feedKey(key)) {
                         .no_match => {
                             std.log.warn("no key match: {}\n", .{ key });
                         },
@@ -139,10 +78,10 @@ pub fn main(init: std.process.Init) !void {
                                     tui.cyclePaneFocus();
                                 },
                                 .motion_up => {
-                                    tui.active_view.log.commit_log_pane.prevCommitRow(commits.items.len);
+                                    tui.active_view.log.commit_log_pane.prevCommitRow(app.commits.len);
                                 },
                                 .motion_down => {
-                                    tui.active_view.log.commit_log_pane.nextCommitRow(commits.items.len);
+                                    tui.active_view.log.commit_log_pane.nextCommitRow(app.commits.len);
                                 }
                             }
                         }
