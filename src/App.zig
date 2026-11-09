@@ -3,7 +3,10 @@ const App = @This();
 const std = @import("std");
 const Config = @import("config/Config.zig");
 const KeyMatcher = @import("inputpkg.zig").KeyMatcher;
-const Commit = @import("corepkg.zig").Commit;
+const corepkg = @import("corepkg.zig");
+
+const Commit = corepkg.Commit;
+const BehaviorValue = corepkg.Behaviors.Value;
 
 // Signifies a new commit record. Lines without `0x1e` are graph lines
 // belonging to the current commit record.
@@ -12,7 +15,7 @@ const RECORD_SEPARATOR = "\\x1e";
 const FIELD_SEPARATOR = "\\t";
 const RECORD_END = "\\n\\n";
 
-const LOG_TEMPLATE = 
+const LOG_TEMPLATE =
     "\"" ++ RECORD_SEPARATOR ++ "\"" ++
     " ++ json(self) ++ " ++
     "\"" ++ FIELD_SEPARATOR ++ "\"" ++
@@ -36,7 +39,12 @@ pub fn init(io: std.Io, alloc: std.mem.Allocator, environ_map: *std.process.Envi
     var commits_arena = std.heap.ArenaAllocator.init(alloc);
     errdefer commits_arena.deinit();
 
-    const commits = try loadCommits(alloc, io, &commits_arena);
+    const commits = try loadCommits(
+        alloc, 
+        io, 
+        &commits_arena, 
+        config.behaviors.log_commits
+    );
 
     return .{
         .state = .{
@@ -47,20 +55,22 @@ pub fn init(io: std.Io, alloc: std.mem.Allocator, environ_map: *std.process.Envi
     };
 }
 
-fn loadCommits(alloc: std.mem.Allocator, io: std.Io, commits_arena: *std.heap.ArenaAllocator) ![]const Commit {
-    const result = try std.process.run(alloc, io, .{
-        .argv = &.{
-            "jj",
-            "log",
-            "-r",
-            "all()",
-            "--no-pager",
-            "--color",
-            "never",
-            "-T",
-            LOG_TEMPLATE,
-        },
-    });
+pub fn globalState(self: *const App) *const GlobalState {
+    return &self.state;
+}
+
+fn loadCommits(
+    alloc: std.mem.Allocator,
+    io: std.Io,
+    commits_arena: *std.heap.ArenaAllocator,
+    log_behavior: @FieldType(BehaviorValue, "log_commits"),
+) ![]const Commit {
+    const argv: []const []const u8 = switch (log_behavior) {
+        .default => &.{ "jj", "log", "--no-pager", "--color", "never", "-T", LOG_TEMPLATE },
+        .all => &.{ "jj", "log", "-r", "all()", "--no-pager", "--color", "never", "-T", LOG_TEMPLATE },
+    };
+
+    const result = try std.process.run(alloc, io, .{ .argv = argv });
 
     defer alloc.free(result.stdout);
     defer alloc.free(result.stderr);
@@ -91,11 +101,11 @@ fn loadCommits(alloc: std.mem.Allocator, io: std.Io, commits_arena: *std.heap.Ar
 
         // we found a new commit, finalize previous
         if (commits.items.len > 0) {
-            commits.items[commits.items.len - 1].graph_lines = 
+            commits.items[commits.items.len - 1].graph_lines =
                 try graph_lines.toOwnedSlice(commits_arena.allocator());
         }
 
-        const record = line[marker + 1..];
+        const record = line[marker + 1 ..];
 
         const separator = std.mem.findScalar(u8, record, '\t') orelse
             return error.InvalidCommitRecord;
@@ -110,13 +120,13 @@ fn loadCommits(alloc: std.mem.Allocator, io: std.Io, commits_arena: *std.heap.Ar
             },
         );
 
-        commit.display_id = try commits_arena.allocator().dupe(u8, record[separator + 1..]);
+        commit.display_id = try commits_arena.allocator().dupe(u8, record[separator + 1 ..]);
         commit.graph_lines = &.{};
 
         try commits.append(commits_arena.allocator(), commit);
         try graph_lines.append(commits_arena.allocator(), try commits_arena.allocator().dupe(u8, line[0..marker]));
 
-        std.log.info("line: {s}\n", .{ line });
+        std.log.info("line: {s}\n", .{line});
     }
 
     // finalize last commit since never encounters record separator

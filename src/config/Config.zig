@@ -2,10 +2,15 @@ const Config = @This();
 
 const std = @import("std");
 const inputpkg = @import("../inputpkg.zig");
+// const Behavior = @import("../corepkg.zig").behavior.Behavior;
+const Behaviors = @import("../corepkg.zig").Behaviors;
 
 const file_load = @import("file_load.zig");
 
 bindings: inputpkg.Binding.Set = .{},
+behaviors: Behaviors = .{
+    .log_commits = .default,
+},
 
 pub fn load(
     self: *Config,
@@ -63,6 +68,7 @@ pub fn load(
 
         try inputpkg.Entry.parseAndApply(
             &self.bindings,
+            &self.behaviors,
             alloc,
             entry_type,
             entry_value,

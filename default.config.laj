@@ -1,3 +1,4 @@
+behavior = log_commits:default
 keybind = j=motion_down
 keybind = k=motion_up
 keybind = tab=cycle_pane_focus
