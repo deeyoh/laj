@@ -23,26 +23,29 @@ pub fn draw(
         .is_focused = has_focus,
     }).draw(root);
 
+    var offset: usize = 0;
     const row_height: usize = 2;
     for (commits, 0..) |*commit, index| {
-        const y = index * row_height;
-        if (index >= content.height) break;
+        const block_start = offset;
+        offset += row_height;
+
+        if (offset <= self.scroll) continue;
+        const visible_start = @max(block_start, self.scroll);
+        const y = visible_start - self.scroll;
+        if (y >= content.height) break;
 
         const row_window = content.child(.{
             .x_off = 0,
             .y_off = @intCast(y),
             .width = content.width,
-            .height = @intCast(@min(
-                row_height,
-                content.height - y,
-            )),
+            .height = @intCast(@min(offset - visible_start, content.height - y)),
         });
 
         const row = CommitRow{
             .commit = commit
         };
 
-        row.draw(row_window, index == self.selected_index);
+        row.draw(row_window, index == self.selected_index, visible_start - block_start);
     }
 }
 

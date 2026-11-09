@@ -9,10 +9,11 @@ commit: *const Commit,
 pub fn draw(
     self: CommitRow,
     window: vaxis.Window,
-    isHighlighted: bool,
+    is_highlighted: bool,
+    first_line: usize,
 ) void {
     const base_style: vaxis.Style = .{
-        .bg = if (isHighlighted) .{ .index = 8 } else .default,
+        .bg = if (is_highlighted) .{ .index = 8 } else .default,
     };
 
     // Fill trailing blank space as well as the text's background.
@@ -35,31 +36,40 @@ pub fn draw(
     node_style.fg = .{ .index = 2 };
 
     var lines = std.mem.splitScalar(u8, self.commit.description, '\n');
-    const first_line = lines.next() orelse "";
-    const description = if (first_line.len == 0) "(no description)" else first_line;
     const short_hash = self.commit.commit_id[0..@min(self.commit.commit_id.len, 8)];
 
-    _ = window.print(&.{
-        .{ .text = "○ ", .style = node_style },
+    const summary = lines.next() orelse "";
+    const description = if (summary.len == 0) "(no description)" else summary;
+
+    if (first_line == 0) _ = window.print(&.{
+        .{ .text = self.commit.graph_lines[0], .style = node_style },
         .{ .text = self.commit.display_id, .style = change_style },
         .{ .text = " ", .style = base_style },
         .{ .text = short_hash, .style = hash_style },
         .{ .text = " ", .style = base_style },
         .{ .text = self.commit.author.name, .style = author_style },
-        .{ .text = "  ", .style = base_style },
-    }, .{ 
-        .row_offset = 0,
-        .wrap = .none 
-    });
+    }, .{ .row_offset = 0, .wrap = .none });
 
-    if (window.height > 1) {
+    if (first_line <= 1 and 1 - first_line < window.height) {
+        const row: u16 = @intCast(1 - first_line);
+        const graph = if (self.commit.graph_lines.len > 1) self.commit.graph_lines[1] else "";
         _ = window.printSegment(.{
-            .text = description,
-            .style = base_style,
-        }, .{
-            .row_offset = 1,
-            .col_offset = 2,
-            .wrap = .none,
-        });
+            .text = graph,
+            .style = node_style,
+        }, .{ .row_offset = row, .wrap = .none });
+
+        // jj trims trailing spaces from graph-only lines. Align the description
+        // with the details, without overwriting a wider connector prefix.
+        const column = @max(window.gwidth(self.commit.graph_lines[0]), window.gwidth(graph) + 1);
+        if (column < window.width) {
+            _ = window.printSegment(.{
+                .text = description,
+                .style = base_style,
+            }, .{
+                .row_offset = row,
+                .col_offset = column,
+                .wrap = .none,
+            });
+        }
     }
 }
