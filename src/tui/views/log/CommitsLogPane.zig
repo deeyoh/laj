@@ -23,8 +23,37 @@ pub fn draw(
         .is_focused = has_focus,
     }).draw(root);
 
-    var offset: usize = 0;
     const row_height: usize = 2;
+    const viewport_height: usize = content.height;
+
+    if (commits.len == 0) {
+        self.selected_index = 0;
+        self.scroll = 0;
+        return;
+    }
+
+    if (viewport_height == 0) return;
+
+    // Keep selection valid if the commit list shrinks.
+    self.selected_index = @min(self.selected_index, commits.len - 1);
+
+    const selected_start = self.selected_index * row_height;
+    const selected_end = selected_start + row_height;
+
+    if (viewport_height < row_height) {
+        self.scroll = selected_start;
+    } else if (selected_start < self.scroll) {
+        self.scroll = selected_start;
+    } else if (selected_end > self.scroll + viewport_height) {
+        self.scroll = selected_end - viewport_height;
+    }
+
+    // Clamp after resizing or shrinking the commit list.
+    const total_height = commits.len * row_height;
+    const max_scroll = total_height -| viewport_height;
+    self.scroll = @min(self.scroll, max_scroll);
+
+    var offset: usize = 0;
     for (commits, 0..) |*commit, index| {
         const block_start = offset;
         offset += row_height;
