@@ -6,6 +6,19 @@ const Commit = @import("../../../core/Commit.zig");
 
 commit: *const Commit,
 
+/// Height of the selectable commit, excluding trailing elision lines.
+pub fn height(self: CommitRow) usize {
+    for (self.commit.graph_lines, 0..) |graph, index| {
+        if (std.mem.findScalar(u8, graph, '~') != null) return index;
+    }
+    return self.totalHeight();
+}
+
+/// Includes non-selectable graph decorations following the commit.
+pub fn totalHeight(self: CommitRow) usize {
+    return @max(@as(usize, 2), self.commit.graph_lines.len);
+}
+
 pub fn draw(
     self: CommitRow,
     window: vaxis.Window,
@@ -35,6 +48,38 @@ pub fn draw(
     var node_style = base_style;
     node_style.fg = .{ .index = 2 };
 
+    var elision_style = base_style;
+    elision_style.fg = .{ .index = 245 };
+
+    // Preserve connector and elision lines, including when the row is clipped.
+    for (self.commit.graph_lines, 0..) |graph, line_index| {
+        if (line_index < first_line) continue;
+        const y = line_index - first_line;
+        if (y >= window.height) break;
+
+        const label = "(elided revisions)";
+        const label_start = std.mem.find(u8, graph, label);
+        const graph_prefix = if (label_start) |start| graph[0..start] else graph;
+        _ = window.printSegment(.{
+            .text = graph_prefix,
+            .style = node_style,
+        }, .{ .row_offset = @intCast(y), .wrap = .none });
+
+        if (std.mem.findScalar(u8, graph, '~') != null) {
+            const column = window.gwidth(graph_prefix) + @as(usize, if (label_start == null) 1 else 0);
+            if (column < window.width) {
+                _ = window.printSegment(.{
+                    .text = label,
+                    .style = elision_style,
+                }, .{
+                    .row_offset = @intCast(y),
+                    .col_offset = @intCast(column),
+                    .wrap = .none,
+                });
+            }
+        }
+    }
+
     var lines = std.mem.splitScalar(u8, self.commit.description, '\n');
     const short_hash = self.commit.commit_id[0..@min(self.commit.commit_id.len, 8)];
 
@@ -42,7 +87,7 @@ pub fn draw(
     const description = if (summary.len == 0) "(no description)" else summary;
 
     if (first_line == 0) _ = window.print(&.{
-        .{ .text = self.commit.graph_lines[0], .style = node_style },
+        .{ .text = if (self.commit.graph_lines.len > 0) self.commit.graph_lines[0] else "", .style = node_style },
         .{ .text = self.commit.display_id, .style = change_style },
         .{ .text = " ", .style = base_style },
         .{ .text = short_hash, .style = hash_style },
@@ -53,14 +98,13 @@ pub fn draw(
     if (first_line <= 1 and 1 - first_line < window.height) {
         const row: u16 = @intCast(1 - first_line);
         const graph = if (self.commit.graph_lines.len > 1) self.commit.graph_lines[1] else "";
-        _ = window.printSegment(.{
-            .text = graph,
-            .style = node_style,
-        }, .{ .row_offset = row, .wrap = .none });
+        // Do not overwrite an elision annotation on this line.
+        if (std.mem.findScalar(u8, graph, '~') != null) return;
 
         // jj trims trailing spaces from graph-only lines. Align the description
         // with the details, without overwriting a wider connector prefix.
-        const column = @max(window.gwidth(self.commit.graph_lines[0]), window.gwidth(graph) + 1);
+        const header_graph = if (self.commit.graph_lines.len > 0) self.commit.graph_lines[0] else "";
+        const column = @max(window.gwidth(header_graph), window.gwidth(graph) + 1);
         if (column < window.width) {
             _ = window.printSegment(.{
                 .text = description,

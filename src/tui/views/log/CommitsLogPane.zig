@@ -23,7 +23,6 @@ pub fn draw(
         .is_focused = has_focus,
     }).draw(root);
 
-    const row_height: usize = 2;
     const viewport_height: usize = content.height;
 
     if (commits.len == 0) {
@@ -37,10 +36,16 @@ pub fn draw(
     // Keep selection valid if the commit list shrinks.
     self.selected_index = @min(self.selected_index, commits.len - 1);
 
-    const selected_start = self.selected_index * row_height;
-    const selected_end = selected_start + row_height;
+    var total_height: usize = 0;
+    var selected_start: usize = 0;
+    for (commits, 0..) |*commit, index| {
+        if (index == self.selected_index) selected_start = total_height;
+        total_height += (CommitRow{ .commit = commit }).totalHeight();
+    }
+    const selected_height = (CommitRow{ .commit = &commits[self.selected_index] }).height();
+    const selected_end = selected_start + selected_height;
 
-    if (viewport_height < row_height) {
+    if (viewport_height < selected_height) {
         self.scroll = selected_start;
     } else if (selected_start < self.scroll) {
         self.scroll = selected_start;
@@ -49,32 +54,40 @@ pub fn draw(
     }
 
     // Clamp after resizing or shrinking the commit list.
-    const total_height = commits.len * row_height;
     const max_scroll = total_height -| viewport_height;
     self.scroll = @min(self.scroll, max_scroll);
 
     var offset: usize = 0;
     for (commits, 0..) |*commit, index| {
         const block_start = offset;
-        offset += row_height;
+        const row = CommitRow{ .commit = commit };
+        const commit_end = block_start + row.height();
+        offset += row.totalHeight();
 
         if (offset <= self.scroll) continue;
-        const visible_start = @max(block_start, self.scroll);
-        const y = visible_start - self.scroll;
-        if (y >= content.height) break;
+        if (block_start >= self.scroll + viewport_height) break;
 
-        const row_window = content.child(.{
-            .x_off = 0,
-            .y_off = @intCast(y),
-            .width = content.width,
-            .height = @intCast(@min(offset - visible_start, content.height - y)),
-        });
-
-        const row = CommitRow{
-            .commit = commit
-        };
-
-        row.draw(row_window, index == self.selected_index, visible_start - block_start);
+        // Draw the selectable commit and its trailing graph decorations as
+        // separate regions. Decorations never inherit the selection highlight.
+        const starts = .{ block_start, commit_end };
+        const ends = .{ commit_end, offset };
+        inline for (0..2) |region| {
+            const visible_start = @max(starts[region], self.scroll);
+            const visible_end = @min(ends[region], self.scroll + viewport_height);
+            if (visible_start < visible_end) {
+                const row_window = content.child(.{
+                    .x_off = 0,
+                    .y_off = @intCast(visible_start - self.scroll),
+                    .width = content.width,
+                    .height = @intCast(visible_end - visible_start),
+                });
+                row.draw(
+                    row_window,
+                    region == 0 and index == self.selected_index,
+                    visible_start - block_start,
+                );
+            }
+        }
     }
 }
 
